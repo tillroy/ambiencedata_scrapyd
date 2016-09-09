@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="well">
+    {{ msg }}
+</div>
+
+<!-- Modal add egg -->
+<div id="add_egg" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+    <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Create new project</h4>
+            </div>
+            <form id="add_project_form" enctype="multipart/form-data" method="post" data-toggle="validator" role="form">
+                <div class="modal-body">
+                    <input type="file" name="filename" class="filestyle" data-icon="false" data-buttonText="Select an EGG" data-buttonName="btn-primary">
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" name="add_egg">
+                    <button id="add_project_form_submit" type="submit" class="btn btn-success">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Modal add egg -->
+
+<div class="starter-template">
+    <div class="row">
+
+        <h1 class="text-left"><span class="label label-default">Project: {{ project_name }}</span></h1>
+        <button type="submit" class="btn btn-info btn-xs" data-toggle="modal" data-target="#add_egg">Add</button>
+        <div class="panel-group" id="accordion">
+            {% for version in versions_list %}
+            <!--<form id="run_project_form{{ version['egg_num'] }}" method="post">-->
+            <div class="panel panel-{{ version['style'] }}">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <div class="row">
+                            <div class="col-sm-8 text-left">
+                                <button type="button" class="btn btn-{{ version['style'] }} btn-block btn-sm" data-toggle="collapse" href="#collapse{{ version['egg_num'] }}" data-parent="#accordion">{{ version["egg_name"] }}</button>
+                            </div>
+                            <div class="col-sm-1 text-left">
+                                <button type="button" class="btn btn-success btn-block btn-sm" data-toggle="modal" data-target="#run_egg_{{ version['egg_num'] }}"  {{ version['mode'] }}>Run</button>
+                                <!--<button type="submit" name="run_project" value="{{ version['egg_name'] }}" class="btn btn-success btn-block btn-sm {{ version['mode'] }}" data-toggle="modal" data-target="#run_egg_{{ version['egg_num'] }}">Run</button>-->
+                            </div>
+                            <div class="col-sm-1 text-left">
+                                <button type="button" class="btn btn-primary btn-block btn-sm {{ version['mode'] }}"  {{ version['mode'] }}>Deploy</button>
+                            </div>
+                            <div class="col-sm-1 text-right">
+                                <span class="badge">{{ version['spiders_count'] }}</span>
+                            </div>
+                            <div class="col-sm-1 text-right">
+                                <button type="button" class="close" data-toggle="modal" name="del_egg" value="{{ version['egg_name'] }}" disabled>&#9679;</button>
+                            </div>
+                        </div>
+
+
+                    </h4>
+                </div>
+                <div id="collapse{{ version['egg_num'] }}" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        {% if version['error_msg'] %}
+                        <div class="alert alert-danger">
+                            <strong>Danger!</strong> {{ version['error_msg'] }}
+                        </div>
+                        {% endif %}
+
+                        {% if version['spiders'] %}
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Spider name</th>
+                                    <th>Repeat</th>
+                                    <th>Runtime</th>
+                                    <th>Use</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for spider in version['spiders']%}
+                                <tr>
+                                    <td></td>
+                                    <td class="text-left"><b>{{ spider.name }}</b></td>
+                                    <td>{{ spider.runtime.minute }} | {{ spider.runtime.hour }}</td>
+                                    <td>{{ spider.runtime.mode }}</td>
+                                    <td>
+                                        {% if spider.enabled == "yes" %}
+                                        <input type="checkbox" class="checkbox" checked/>
+                                        <input name="spiders_for_run" value="{{ spider.name }}" type="hidden">
+                                        {% endif %}
+                                        {% if spider.enabled == "no" %}
+                                        <input type="checkbox" class="checkbox"/>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                        {% endif %}
+                        <button type="button" class="btn btn-success btn-sm"  data-toggle="modal" data-target="#save_config_{{ version['egg_num'] }}">Save configuration</button>
+                    </div>
+                </div>
+                <!-- Modal -->
+                <div id="save_config_{{ version['egg_num'] }}" class="modal fade" role="dialog">
+                    <div class="modal-dialog">
+                    <!-- Modal content-->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Overwrite configuration</h4>
+                            </div>
+                            <form id="save_config_form" enctype="multipart/form-data" method="post" data-toggle="validator" role="form">
+                                <div class="modal-body">
+                                    <p>Do you really want to overwrite <b>{{ version['egg_name'] }}</b> configuration file?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <!--<input type="hidden" name="del_project" value="{{ version['egg_name'] }}">-->
+                                    <button type="submit" class="btn btn-success">Yes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal -->
+                <!-- Modal -->
+                <div id="run_egg_{{ version['egg_num'] }}" class="modal fade" role="dialog">
+                    <div class="modal-dialog">
+                    <!-- Modal content-->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Run version</h4>
+                            </div>
+                            <form id="run_egg_form" enctype="multipart/form-data" method="post" data-toggle="validator" role="form">
+                                <div class="modal-body">
+                                    <p>Do you really want to run <b>{{ version['egg_name'] }}</b> version?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    {% for spider in version['spiders']%}
+                                        {% if spider.enabled == "yes" %}
+                                            <input name="spiders_for_run" value="{{ spider.name }}" type="hidden">
+                                        {% endif %}
+                                    {% endfor %}
+                                    <button type="submit" class="btn btn-success">Yes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal -->
+            </div>
+            <!--</form>-->
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
