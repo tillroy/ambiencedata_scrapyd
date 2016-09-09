@@ -404,7 +404,7 @@ class Project(Resource):
         #         self.root.scheduler.schedule(self.path, spider, **args)
         #
         # save_config = request.args['save_config']
-        print(request.args)
+
         request.redirect(self.path)
         return ''
 
