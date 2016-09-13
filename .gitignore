@@ -8,8 +8,9 @@ build
 test.xml
 old2_website.py
 old_website.py
-
+test.py
 scripts/configs
+scripts/crontabs
 scripts/eggs
 scripts/items
 scripts/dbs
@@ -17,3 +18,4 @@ scripts/logs
 scripts/twistd.pid
 scripts/test.txt
 tests
+

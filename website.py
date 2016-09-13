@@ -22,12 +22,13 @@ import shutil
 from cStringIO import StringIO
 from .project_summary import ProjectSummary
 import uuid
-from .configstorage import Spider, ProjectConfigController
+from .configstorage import ProjectConfigController, Spider
 
 
 class Root(Resource):
     def __init__(self, config, app):
         Resource.__init__(self)
+        self.config = config
         self.debug = config.getboolean('debug', False)
         self.runner = config.get('runner')
         logsdir = config.get('logs_dir')
@@ -42,6 +43,14 @@ class Root(Resource):
         self.env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
 
         self.summary = self.get_main_summary()
+
+        # add webservices API
+        services = config.items('services', ())
+        for servName, servClsName in services:
+          servCls = load_object(servClsName)
+          self.putChild(servName, servCls(self))
+
+
         self.update_projects()
 
     def __connect_static_files(self):
@@ -80,8 +89,8 @@ class Root(Resource):
         for project_name in projects:
             summary = {
                 'project_name': project_name,
-                'project_summary': list(ProjectSummary(base_dir, project_name).summary()),
-                'eggs_count': len(list(ProjectSummary(base_dir, project_name).summary()))
+                'project_summary': list(ProjectSummary(project_name, self.config).summary()),
+                'eggs_count': len(list(ProjectSummary(project_name, self.config).summary()))
             }
             yield summary
 
@@ -102,7 +111,7 @@ class Root(Resource):
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template('projects_list.html')
 
-        msg = list(self.get_main_summary())
+        msg = dir(self.runner)
 
         return template.render(msg=msg, projects_list=list(enumerate(self.get_main_info()))).encode('utf-8')
 
@@ -137,23 +146,6 @@ class Root(Resource):
     def update_projects(self):
         self.poller.update_projects()
         self.scheduler.update_projects()
-
-    # def get_configstorage(self):
-    #     configstorage = dict()
-    #     for project in self.get_main_summary():
-    #         project_name = project.get("project_name")
-    #         prj = ProjectConfigController(project_name)
-    #         configstorage[project_name] = dict()
-    #         for version in project.get("project_summary"):
-    #             version_name = version.get("egg_name")
-    #             if not prj.isexist(version_name):
-    #                 spiders_list = [Spider().set(spider) for spider in version.get("spiders")]
-    #                 project_name.write_config(version_name, spiders_list)
-    #
-    #             # list of config Spiders instants
-    #             configstorage[str(project_name)][str(version_name)] = prj.read_config(version_name)
-    #     return configstorage
-
 
     @property
     def launcher(self):
@@ -318,11 +310,24 @@ class Project(Resource):
             if item[0] == self.path:
                 return item
 
-    def get_page_summary(self):
+    def get_project_summary(self):
         """get data only for particular project"""
         for item in self.main_summary:
             if item['project_name'] == self.path:
                 return item
+
+    def get_version_summary(self, version_name):
+        summary = self.get_project_summary()
+        project_summary = summary.get("project_summary")
+        # print("summary", project_summary)
+        for version in project_summary:
+            if version.get("egg_name") == version_name:
+                return version
+            # spiders = version.get("egg_name")
+            # print(spiders)
+        #     if version.egg_name == version_name:
+        #         return version
+        return None
 
     def add_egg(self, req):
         """add agg and update projects"""
@@ -336,6 +341,7 @@ class Project(Resource):
         eggf = StringIO(form["filename"].value)
         project = self.path
         version = form["filename"].filename.rstrip(".egg")
+        print(version)
         self.root.eggstorage.put(eggf, project, version)
 
     def get_status(self):
@@ -352,7 +358,7 @@ class Project(Resource):
     def render_GET2(self, request):
         # FIXME to summary dict
         projects_list = list(enumerate(self.root_info))
-        page = self.get_page_summary()
+        page = self.get_project_summary()
 
         the_newest_prj = self.root.eggstorage.list(self.path)
 
@@ -372,7 +378,7 @@ class Project(Resource):
     def render_GET(self, request):
         # FIXME to summary dict
         projects_list = list(enumerate(self.root_info))
-        page = self.get_page_summary()
+        page = self.get_project_summary()
 
         template = self.root.env.get_template('project.html')
         return template.render(
@@ -383,31 +389,60 @@ class Project(Resource):
         ).encode('utf-8')
 
     def render_POST(self, request):
-        # run_project = request.args['run_project']
-        # if run_project:
-        #     # project or egg name, here is the same
-        #     version_name = run_project[0]
-        #
-        #     spiders = request.args['spiders_for_run']
-        #     # self.root.eggstorage.get(self.path, version_name)
-        #     # print(str(self.root.eggstorage.get(self.path, version_name)))
-        #     print(run_project)
-        #     print(spiders)
-        #     print(len(spiders))
-        #
-        #     for spider in spiders:
-        #         args = dict()
-        #         args['settings'] = dict()
-        #         jobid = uuid.uuid1().hex
-        #         args['_job'] = jobid
-        #         # print(args)
-        #         self.root.scheduler.schedule(self.path, spider, **args)
-        #
-        # save_config = request.args['save_config']
-        print(request.args)
-        print(request.args)
-        request.redirect(self.path)
-        return ''
+        deploy_egg = request.args.get("deploy_egg")
+        if deploy_egg:
+            pcc = ProjectConfigController(self.path, self.root.config)
+            # FIXME put user name into config file
+            pcc.use_crontab(deploy_egg[0], user_name="roman")
+            request.redirect(self.path)
+            return ""
+
+        add_egg = request.args.get("add_egg")
+        if add_egg:
+            self.add_egg(request)
+            request.redirect('#')
+            return ""
+
+        run_project = request.args.get("run_project")
+        if run_project:
+            # project or egg name, here is the same
+            version_name = run_project[0]
+
+            spiders = request.args['spiders_for_run']
+            # self.root.eggstorage.get(self.path, version_name)
+            # print(str(self.root.eggstorage.get(self.path, version_name)))
+            print(run_project)
+            print(spiders)
+            print(len(spiders))
+
+            for spider in spiders:
+                args = dict()
+                args['settings'] = dict()
+                jobid = uuid.uuid1().hex
+                args['_job'] = jobid
+                # print(args)
+                self.root.scheduler.schedule(self.path, spider, **args)
+
+            # save_config = request.args['save_config']
+            print(request.args)
+            request.redirect(self.path)
+            return ""
+
+        save_config = request.args.get("save_config")
+        if save_config:
+            version_name = save_config[0]
+            version_summary = self.get_version_summary(version_name)
+
+            # INFO it works
+            print(version_summary.get("spiders"))
+
+            # if request.args.get("spider_config"):
+            #     for spider_name in spidersnames_list:
+            #         sp = Spider()
+            print(request.args)
+            request.redirect(self.path)
+            return ""
+
 
 
 class Jobs(Resource):

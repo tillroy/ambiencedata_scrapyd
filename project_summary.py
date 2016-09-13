@@ -7,9 +7,9 @@ from .configstorage import ProjectConfigController, Spider
 
 
 class ProjectSummary(object):
-    def __init__(self,base_dir, project_name):
-        self.project_path = path.join(base_dir, project_name)
-        self.project_config = ProjectConfigController(project_name)
+    def __init__(self, project_name, config):
+        self.project_path = path.join(config.get("eggs_dir"), project_name)
+        self.project_config = ProjectConfigController(project_name, config)
         self.project_eggs = self.get_project_eggs()
 
 
@@ -42,6 +42,7 @@ class ProjectSummary(object):
 
         spiders_name_list = list(get_correct_names())
 
+        # TODO move into separated function?
         # make config files
         if not self.project_config.isexist(egg_name):
             spiders_list = [Spider().set(spider_name) for spider_name in spiders_name_list]
@@ -53,7 +54,10 @@ class ProjectSummary(object):
 
     def summary(self):
         for num, egg in enumerate(self.project_eggs):
+
+            # config files are creating here
             spiders = self.get_spiders_list(egg)
+
             summary = {
                 'egg_num': num + 1,
                 'egg_name': egg,
@@ -70,8 +74,10 @@ class ProjectSummary(object):
                 summary['mode'] = 'disabled'
                 summary['style'] = 'warning'
 
-            yield summary
+            # TODO move into separated function?
+            self.project_config.make_crontab(egg)
 
+            yield summary
 
 
 if __name__ == "__main__":
