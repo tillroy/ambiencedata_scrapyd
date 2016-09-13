@@ -71,10 +71,10 @@
                             <thead>
                                 <tr>
                                     <th></th>
-                                    <th>Spider name</th>
-                                    <th>Repeat</th>
-                                    <th>Runtime</th>
-                                    <th>Use</th>
+                                    <th class="text-left">Spider name</th>
+                                    <th class="text-left">Minute</th>
+                                    <th class="text-left">Hour</th>
+                                    <th class="text-right">Disable</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -82,14 +82,19 @@
                                 <tr>
                                     <td></td>
                                     <td class="text-left"><b>{{ spider.name }}</b></td>
-                                    <td>{{ spider.minute.value }} | {{ spider.hour.value }}</td>
-                                    <td>{{ spider.minute.mode }}</td>
-                                    <td>
+                                    <td class="text-left">{{ spider.minute.value }}
+                                        <input type="checkbox" checked name='time-checkbox' data-on-text="on" data-off-text="every" data-size="mini" data-on-color="primary" data-off-color="info">
+                                    </td>
+                                    <td class="text-left">
+                                        {{ spider.hour.value }}
+                                        <input id="switch-labelText" type="checkbox" checked name='time-checkbox' data-on-text="on" data-off-text="every" data-size="mini" data-on-color="primary" data-off-color="info">
+                                    </td>
+                                    <td class="text-right">
                                         {% if spider.enabled == "yes" %}
-                                        <input type="checkbox" class="checkbox" name="spider_config" value="{{ spider.name }}" checked/>
+                                        <input type="checkbox" class="checkbox" name="spider_enabled" value="{{ spider.name }}" checked data-group-cls="btn-group-xs"/>
                                         {% endif %}
                                         {% if spider.enabled == "no" %}
-                                        <input type="checkbox" class="checkbox"/>
+                                        <input type="checkbox" class="checkbox" name="spider_enabled" value="{{ spider.name }}" data-group-cls="btn-group-xs"/>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -157,7 +162,7 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                <h4 class="modal-title">Run version</h4>
+                                <h4 class="modal-title">Deploy version</h4>
                             </div>
                             <form id="deploy_egg_form" enctype="multipart/form-data" method="post" data-toggle="validator" role="form">
                                 <div class="modal-body">

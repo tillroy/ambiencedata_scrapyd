@@ -15,6 +15,7 @@
         <link href="styles.css" rel="stylesheet"/>
         <link href="bootstrap.min.css" rel="stylesheet"/>
         <link href="bootstrap-theme.min.css" rel="stylesheet"/>
+        <link href="bootstrap-switch.css" rel="stylesheet"/>
         <link href="theme.css" rel="stylesheet"/>
 
         <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
@@ -23,17 +24,16 @@
         <!-- Custom styles for this template -->
         <link href="starter-template.css" rel="stylesheet"/>
 
-
         <!--<script type="text/javascript" src="jquery-3.1.0.min.js"></script>-->
         <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
         <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
         <script src="ie-emulation-modes-warning.js"></script>
 
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-        <!--[if lt IE 9]>
-          <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 
+        <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
         <![endif]-->
     </head>
     <body>
@@ -92,6 +92,13 @@
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="ie10-viewport-bug-workaround.js"></script>
     <script src="bootstrap-checkbox.min.js" defer></script>
+    <script src="bootstrap-switch.min.js"></script>
     <script src="modal_windows.js"></script>
+    <script type="text/javascript">
+        window.onload = function() {
+            $("[name='spider_enabled']").checkboxpicker();
+            $("[name='time-checkbox']").bootstrapSwitch();
+        };
+    </script>
   </body>
 </html>

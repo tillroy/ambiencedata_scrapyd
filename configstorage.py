@@ -122,6 +122,15 @@ class Spider(object):
 
         return self
 
+    def set_enabled(self, enabled):
+        if enabled in ("yes", "no"):
+            self.enabled = enabled
+        else:
+            raise ValueError("Value out of range (yes, no)")
+
+    def get(self):
+        return self
+
     def set_minute(self, value=None, mode=None):
         """set minute via Minute interface"""
         self.minute.set(value=value, mode=mode)

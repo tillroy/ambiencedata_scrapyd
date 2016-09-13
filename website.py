@@ -58,6 +58,7 @@ class Root(Resource):
         gui_files = (
             "bootstrap.min.css",
             "bootstrap-theme.min.css",
+            "bootstrap-switch.css",
             "ie10-viewport-bug-workaround.css",
             "starter-template.css",
             "theme.css",
@@ -68,6 +69,7 @@ class Root(Resource):
             "ie-emulation-modes-warning.js",
             "bootstrap-filestyle.min.js",
             "bootstrap-checkbox.min.js",
+            "bootstrap-switch.min.js",
             "modal_windows.js",
             "logo.png",
         )
@@ -303,6 +305,7 @@ class Project(Resource):
         self.path = path
         self.root_info = self.root.get_main_info()
         self.main_summary = self.root.get_main_summary()
+        self.project_summary = self.get_project_summary()
 
     def get_page_data(self):
         """get data only for particular project"""
@@ -317,17 +320,11 @@ class Project(Resource):
                 return item
 
     def get_version_summary(self, version_name):
-        summary = self.get_project_summary()
+        summary = self.project_summary
         project_summary = summary.get("project_summary")
-        # print("summary", project_summary)
         for version in project_summary:
             if version.get("egg_name") == version_name:
                 return version
-            # spiders = version.get("egg_name")
-            # print(spiders)
-        #     if version.egg_name == version_name:
-        #         return version
-        return None
 
     def add_egg(self, req):
         """add agg and update projects"""
@@ -378,7 +375,7 @@ class Project(Resource):
     def render_GET(self, request):
         # FIXME to summary dict
         projects_list = list(enumerate(self.root_info))
-        page = self.get_project_summary()
+        page = self.project_summary
 
         template = self.root.env.get_template('project.html')
         return template.render(
@@ -388,60 +385,126 @@ class Project(Resource):
             msg=str(self.get_status())
         ).encode('utf-8')
 
-    def render_POST(self, request):
-        deploy_egg = request.args.get("deploy_egg")
-        if deploy_egg:
-            pcc = ProjectConfigController(self.path, self.root.config)
-            # FIXME put user name into config file
-            pcc.use_crontab(deploy_egg[0], user_name="roman")
-            request.redirect(self.path)
-            return ""
-
-        add_egg = request.args.get("add_egg")
-        if add_egg:
-            self.add_egg(request)
-            request.redirect('#')
-            return ""
-
-        run_project = request.args.get("run_project")
-        if run_project:
-            # project or egg name, here is the same
-            version_name = run_project[0]
-
-            spiders = request.args['spiders_for_run']
-            # self.root.eggstorage.get(self.path, version_name)
-            # print(str(self.root.eggstorage.get(self.path, version_name)))
-            print(run_project)
-            print(spiders)
-            print(len(spiders))
-
-            for spider in spiders:
-                args = dict()
-                args['settings'] = dict()
-                jobid = uuid.uuid1().hex
-                args['_job'] = jobid
-                # print(args)
-                self.root.scheduler.schedule(self.path, spider, **args)
-
-            # save_config = request.args['save_config']
-            print(request.args)
-            request.redirect(self.path)
-            return ""
-
-        save_config = request.args.get("save_config")
+    def save_config(self, req):
+        save_config = req.args.get("save_config")
         if save_config:
             version_name = save_config[0]
             version_summary = self.get_version_summary(version_name)
 
-            # INFO it works
-            print(version_summary.get("spiders"))
+            spiders_all = version_summary.get("spiders")
+            spiders_enabled = req.args.get("spider_enabled")
+            updatetd_spiders_list = list()
 
-            # if request.args.get("spider_config"):
-            #     for spider_name in spidersnames_list:
-            #         sp = Spider()
-            print(request.args)
+            for spider in spiders_all:
+                if spiders_enabled is None:
+                    spider.set_enabled("no")
+                    # print(
+                    #     """
+                    #     {0},
+                    #     {1},
+                    #     {2}
+                    #     """.format(
+                    #         spider.name,
+                    #         spider.enabled,
+                    #         spider.minute.value
+                    #     )
+                    # )
+                    updatetd_spiders_list.append(spider)
+
+                else:
+                    if spider.name in spiders_enabled:
+                        spider.set_enabled("yes")
+                        # print(
+                        #     """
+                        #     {0},
+                        #     {1},
+                        #     {2}
+                        #     """.format(
+                        #         spider.name,
+                        #         spider.enabled,
+                        #         spider.minute.value
+                        #     )
+                        # )
+                        updatetd_spiders_list.append(spider)
+                    else:
+                        spider.set_enabled("no")
+                        # print("NOOOO")
+                        # print(
+                        #     """
+                        #     {0},
+                        #     {1},
+                        #     {2}
+                        #     """.format(
+                        #         spider.name,
+                        #         spider.enabled,
+                        #         spider.minute.value
+                        #     )
+                        # )
+                        updatetd_spiders_list.append(spider)
+
+                new_config = ProjectConfigController(self.path, self.root.config)
+                new_config.write_config(version_name, updatetd_spiders_list)
+
+            return self.save_config.__name__
+
+    def buttons(self, req):
+        for button_name in req.args.keys():
+            if button_name == "deploy_egg":
+                return "deploy_egg"
+            elif button_name == "add_agg":
+                return "add_agg"
+            elif button_name == "run_project":
+                return "run_project"
+            elif button_name == "save_config":
+                return self.save_config(req)
+
+    def render_POST(self, request):
+        action = self.buttons(request)
+        if action == "save_config":
             request.redirect(self.path)
             return ""
+        else:
+            return action
+
+        # deploy_egg = request.args.get("deploy_egg")
+        # if deploy_egg:
+        #     pcc = ProjectConfigController(self.path, self.root.config)
+        #     # FIXME put user name into config file
+        #     pcc.use_crontab(deploy_egg[0], user_name="roman")
+        #     request.redirect(self.path)
+        #     return ""
+        #
+        # add_egg = request.args.get("add_egg")
+        # if add_egg:
+        #     self.add_egg(request)
+        #     request.redirect('#')
+        #     return ""
+        #
+        # run_project = request.args.get("run_project")
+        # if run_project:
+        #     # project or egg name, here is the same
+        #     version_name = run_project[0]
+        #
+        #     spiders = request.args['spiders_for_run']
+        #     # self.root.eggstorage.get(self.path, version_name)
+        #     # print(str(self.root.eggstorage.get(self.path, version_name)))
+        #     print(run_project)
+        #     print(spiders)
+        #     print(len(spiders))
+        #
+        #     for spider in spiders:
+        #         args = dict()
+        #         args['settings'] = dict()
+        #         jobid = uuid.uuid1().hex
+        #         args['_job'] = jobid
+        #         # print(args)
+        #         self.root.scheduler.schedule(self.path, spider, **args)
+        #
+        #     # save_config = request.args['save_config']
+        #     print(request.args)
+        #     request.redirect(self.path)
+        #     return ""
+
 
 
 
