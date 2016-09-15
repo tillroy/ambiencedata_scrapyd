@@ -5,20 +5,20 @@
 </div>
 
 <!-- Modal add egg -->
-<div id="add_egg" class="modal fade" role="dialog">
+<div id="add_version" class="modal fade" role="dialog">
     <div class="modal-dialog">
     <!-- Modal content-->
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Create new project</h4>
+                <h4 class="modal-title">Add new version</h4>
             </div>
             <form id="add_project_form" enctype="multipart/form-data" method="post" data-toggle="validator" role="form">
                 <div class="modal-body">
-                    <input type="file" name="filename" class="filestyle" data-icon="false" data-buttonText="Select an EGG" data-buttonName="btn-primary">
+                    <input type="file" name="filename" class="filestyle" data-icon="false" data-buttonText="Select version" data-buttonName="btn-primary">
                 </div>
                 <div class="modal-footer">
-                    <input type="hidden" name="add_egg">
+                    <input type="hidden" name="add_version">
                     <button id="add_project_form_submit" type="submit" class="btn btn-success">Add</button>
                 </div>
             </form>
@@ -26,12 +26,18 @@
     </div>
 </div>
 <!-- Modal add egg -->
+        <div class="row">
+            <div class="col-sm-10 text-left">
+                <b>{{ project_name }}</b>
+            </div>
+            <div class="col-sm-2 text-right">
+                <button type="button" class="btn btn-info btn-xs text-right" data-toggle="modal" data-target="#add_version"><b>+</b></button>
+            </div>
+        <div>
 
 <div class="starter-template">
     <div class="row">
 
-        <h1 class="text-left"><span class="label label-default">Project: {{ project_name }}</span></h1>
-        <button type="button" class="btn btn-info btn-xs" data-toggle="modal" data-target="#add_egg">Add</button>
         <div class="panel-group" id="accordion">
             {% for version in versions_list %}
             <div class="panel panel-{{ version['style'] }}">
@@ -45,7 +51,7 @@
                                 <button type="button" class="btn btn-success btn-block btn-sm" data-toggle="modal" data-target="#run_egg_{{ version['egg_num'] }}"  {{ version['mode'] }}>Run</button>
                             </div>
                             <div class="col-sm-1 text-left">
-                                <button type="button" class="btn btn-primary btn-block btn-sm {{ version['mode'] }}"  data-toggle="modal" data-target="#deploy_egg_{{ version['egg_num'] }}" {{ version['mode'] }}>Deploy</button>
+                                <button type="button" class="btn btn-primary btn-block btn-sm {{ version['mode'] }}"  data-toggle="modal" data-target="#deploy_version_{{ version['egg_num'] }}" {{ version['mode'] }}>Deploy</button>
                             </div>
                             <div class="col-sm-1 text-right">
                                 <span class="badge">{{ version['spiders_count'] }}</span>
@@ -74,7 +80,7 @@
                                     <th class="text-left">Spider name</th>
                                     <th class="text-left">Minute</th>
                                     <th class="text-left">Hour</th>
-                                    <th class="text-right">Disable</th>
+                                    <th class="text-right">Enable</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -156,7 +162,7 @@
                 </div>
                 <!-- Modal -->
                 <!-- Modal -->
-                <div id="deploy_egg_{{ version['egg_num'] }}" class="modal fade" role="dialog">
+                <div id="deploy_version_{{ version['egg_num'] }}" class="modal fade" role="dialog">
                     <div class="modal-dialog">
                     <!-- Modal content-->
                         <div class="modal-content">
@@ -164,7 +170,7 @@
                                 <button type="button" class="close" data-dismiss="modal">&times;</button>
                                 <h4 class="modal-title">Deploy version</h4>
                             </div>
-                            <form id="deploy_egg_form" enctype="multipart/form-data" method="post" data-toggle="validator" role="form">
+                            <form id="deploy_version_form" enctype="multipart/form-data" method="post" data-toggle="validator" role="form">
                                 <div class="modal-body">
                                     <p>Do you really want to deploy <b>{{ version['egg_name'] }}</b> version with exist configuration?</p>
                                 </div>
@@ -174,7 +180,7 @@
                                             <input name="spiders_for_deploy" value="{{ spider.name }}" type="hidden">
                                         {% endif %}
                                     {% endfor %}
-                                    <button type="submit" name="deploy_egg" value="{{ version['egg_name'] }}" class="btn btn-success">Yes</button>
+                                    <button type="submit" name="deploy_version" value="{{ version['egg_name'] }}" class="btn btn-success">Yes</button>
                                 </div>
                             </form>
                         </div>

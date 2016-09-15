@@ -11,13 +11,13 @@ from scrapy.utils.misc import load_object
 from .interfaces import IPoller, IEggStorage, ISpiderScheduler
 
 from urlparse import urlparse
+
 # INFO updated
 from jinja2 import Environment, FileSystemLoader
 import cgi
-import os
-import time
-from zipfile import is_zipfile, ZipFile
-from re import findall, match
+from os import path, remove, makedirs
+
+from re import findall
 import shutil
 from cStringIO import StringIO
 from .project_summary import ProjectSummary
@@ -40,7 +40,7 @@ class Root(Resource):
 
         self.__connect_static_files()
 
-        self.env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
+        self.env = Environment(loader=FileSystemLoader(path.join(path.dirname(__file__), "templates")))
 
         self.summary = self.get_main_summary()
 
@@ -54,7 +54,7 @@ class Root(Resource):
         self.update_projects()
 
     def __connect_static_files(self):
-        srtatic_dir = os.path.join(os.path.dirname(__file__), "static")
+        srtatic_dir = path.join(path.dirname(__file__), "static")
         gui_files = (
             "bootstrap.min.css",
             "bootstrap-theme.min.css",
@@ -75,7 +75,7 @@ class Root(Resource):
         )
 
         for g_file in gui_files:
-            self.putChild(g_file, static.File(os.path.join(srtatic_dir, g_file)))
+            self.putChild(g_file, static.File(path.join(srtatic_dir, g_file)))
 
     def get_main_info(self):
         """make statistics of projects, versions and spiders"""
@@ -108,7 +108,7 @@ class Root(Resource):
             return NoResource()
 
     def render_GET(self, request):
-        template_dir = os.path.join(os.path.dirname(__file__), "templates")
+        template_dir = path.join(path.dirname(__file__), "templates")
         request.args = dict()
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template('projects_list.html')
@@ -120,12 +120,10 @@ class Root(Resource):
     def render_POST(self, request):
         del_project = request.args.get("del_project")
         if del_project:
-            print(request.args)
             project_name = request.args.get("del_project")
             if project_name:
-                folder_path = os.path.join(self.eggstorage.basedir, request.args["del_project"][0])
-                if os.path.exists(folder_path):
-                    pass
+                folder_path = path.join(self.eggstorage.basedir, request.args["del_project"][0])
+                if path.exists(folder_path):
                     shutil.rmtree(folder_path)
                     self.scheduler.update_projects()
                     request.redirect('/')
@@ -135,9 +133,9 @@ class Root(Resource):
         if add_project:
             project_name = request.args.get("project_name")
             if project_name:
-                folder_path = os.path.join(self.eggstorage.basedir, request.args["project_name"][0])
-                if not os.path.exists(folder_path):
-                    os.makedirs(folder_path)
+                folder_path = path.join(self.eggstorage.basedir, request.args["project_name"][0])
+                if not path.exists(folder_path):
+                    makedirs(folder_path)
                     # print(request.args)
                     self.scheduler.update_projects()
                     request.redirect('/')
@@ -182,7 +180,7 @@ class HomePage(Resource):
         return main_info
 
     def render_GET(self, request):
-        template_dir = os.path.join(os.path.dirname(__file__), "templates")
+        template_dir = path.join(path.dirname(__file__), "templates")
         request.args = dict()
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template('projects_list.html')
@@ -326,21 +324,6 @@ class Project(Resource):
             if version.get("egg_name") == version_name:
                 return version
 
-    def add_egg(self, req):
-        """add agg and update projects"""
-        form = cgi.FieldStorage(
-            fp=req.content,
-            headers=req.getAllHeaders(),
-            environ={'REQUEST_METHOD': 'POST',
-                     'CONTENT_TYPE': req.getAllHeaders()['content-type'],
-                     }
-        )
-        eggf = StringIO(form["filename"].value)
-        project = self.path
-        version = form["filename"].filename.rstrip(".egg")
-        print(version)
-        self.root.eggstorage.put(eggf, project, version)
-
     def get_status(self):
         pending = sum(q.count() for q in self.root.poller.queues.values())
         running = len(self.root.launcher.processes)
@@ -447,38 +430,78 @@ class Project(Resource):
 
             return self.save_config.__name__
 
+    def deploy_version(self, req):
+        # FIXME
+        deploy_version = req.args.get("deploy_version")
+        if deploy_version:
+            pcc = ProjectConfigController(self.path, self.root.config)
+            pcc.use_crontab(deploy_version[0], user_name=self.root.config.get("user"))
+            return self.deploy_version.__name__
+
+    def add_version(self, req):
+        add_egg = req.args.get("add_version")
+        if add_egg:
+            form = cgi.FieldStorage(
+                fp=req.content,
+                headers=req.getAllHeaders(),
+                environ={'REQUEST_METHOD': 'POST',
+                         'CONTENT_TYPE': req.getAllHeaders()['content-type'],
+                         }
+            )
+            eggf = StringIO(form["filename"].value)
+            project = self.path
+            version = form["filename"].filename.rstrip(".egg")
+            self.root.eggstorage.put(eggf, project, version)
+
+            return self.add_version.__name__
+
+    def del_version(self, req):
+        del_version = req.args.get("del_version")
+        if del_version:
+            project_name = self.path
+            # FIXME
+            version_name = del_version[0]
+            egg = version_name + ".egg"
+            egg_path = path.join(self.eggstorage.basedir, project_name, egg)
+
+            config_base_dir = self.root.config.get("config_dir")
+            version_config_path_crontab = path.join(config_base_dir, project_name, version_name)
+            version_config_path_xml = path.join(config_base_dir, project_name, version_name + ".xml")
+            if path.exists(egg_path):
+                remove(egg_path)
+                if path.exists(version_config_path_crontab):
+                    remove(version_config_path_crontab)
+                if path.exists(version_config_path_xml):
+                    remove(version_config_path_xml)
+
+                self.scheduler.update_projects()
+                return self.del_version.__name__
+
     def buttons(self, req):
+        print(req.args.keys())
         for button_name in req.args.keys():
-            if button_name == "deploy_egg":
-                return "deploy_egg"
-            elif button_name == "add_agg":
-                return "add_agg"
+            if button_name == "deploy_version":
+                return self.deploy_version(req)
+            elif button_name == "add_version":
+                return self.add_version(req)
             elif button_name == "run_project":
                 return "run_project"
             elif button_name == "save_config":
+                print("sadasdasdasds")
                 return self.save_config(req)
 
+        # INFO dont use else statement
+
     def render_POST(self, request):
+        print(request.args)
         action = self.buttons(request)
-        if action == "save_config":
+        print(action)
+        if action in ("save_config", "deploy_version", "add_version",):
             request.redirect(self.path)
             return ""
         else:
             return action
 
-        # deploy_egg = request.args.get("deploy_egg")
-        # if deploy_egg:
-        #     pcc = ProjectConfigController(self.path, self.root.config)
-        #     # FIXME put user name into config file
-        #     pcc.use_crontab(deploy_egg[0], user_name="roman")
-        #     request.redirect(self.path)
-        #     return ""
-        #
-        # add_egg = request.args.get("add_egg")
-        # if add_egg:
-        #     self.add_egg(request)
-        #     request.redirect('#')
-        #     return ""
         #
         # run_project = request.args.get("run_project")
         # if run_project:
