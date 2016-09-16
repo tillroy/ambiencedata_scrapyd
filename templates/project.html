@@ -78,8 +78,8 @@
                                 <tr>
                                     <th></th>
                                     <th class="text-left">Spider name</th>
-                                    <th class="text-left">Minute</th>
-                                    <th class="text-left">Hour</th>
+                                    <th colspan="2">Minute</th>
+                                    <th colspan="2">Hour</th>
                                     <th class="text-right">Enable</th>
                                 </tr>
                             </thead>
@@ -88,12 +88,56 @@
                                 <tr>
                                     <td></td>
                                     <td class="text-left"><b>{{ spider.name }}</b></td>
-                                    <td class="text-left">{{ spider.minute.value }}
-                                        <input type="checkbox" checked name='time-checkbox' data-on-text="on" data-off-text="every" data-size="mini" data-on-color="primary" data-off-color="info">
+                                    <td class="col-xs-1">
+                                        <select name="deploy_minute_value" class="form-control input-sm">
+                                            {% for minute in range(60) %}
+                                                {% if spider.minute.value|int == minute %}
+                                                    <option value="{{ minute }}|{{ spider.name }}" selected>{{ minute }}</option>
+                                                {% else %}
+                                                    <option value="{{ minute }}|{{ spider.name }}">{{ minute }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
                                     </td>
-                                    <td class="text-left">
-                                        {{ spider.hour.value }}
-                                        <input id="switch-labelText" type="checkbox" checked name='time-checkbox' data-on-text="on" data-off-text="every" data-size="mini" data-on-color="primary" data-off-color="info">
+                                    <td class="text-left col-xs-1">
+                                        {% if spider.minute.mode == "on" %}
+                                        <select name="deploy_minute_mode" class="form-control input-sm">
+                                            <option value="ON|{{ spider.name }}" selected>On</option>
+                                            <option value="EVERY|{{ spider.name }}">Every</option>
+                                        </select>
+                                        {% endif %}
+                                        {% if spider.minute.mode == "every" %}
+                                        <select name="deploy_minute_mode" class="form-control input-sm">
+                                            <option value="ON|{{ spider.name }}">On</option>
+                                            <option value="EVERY|{{ spider.name }}" selected>Every</option>
+                                        </select>
+                                        {% endif %}
+                                    </td>
+                                    <!--<td class="col-xs-1"><input name="deploy_hour_value" class="form-control input-sm" type="text" value="{{ spider.hour.value }}"></td>-->
+                                    <td class="col-xs-1">
+                                        <select name="deploy_hour_value" class="form-control input-sm">
+                                            {% for hour in range(24) %}
+                                                {% if spider.hour.value|int == hour%}
+                                                    <option value="{{ hour }}|{{ spider.name }}" selected>{{ hour }}</option>
+                                                {% else %}
+                                                    <option value="{{ hour }}|{{ spider.name }}">{{ hour }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td class="text-left col-xs-1">
+                                        {% if spider.hour.mode == "on" %}
+                                        <select name="deploy_hour_mode" class="form-control input-sm">
+                                            <option value="ON|{{ spider.name }}" selected>On</option>
+                                            <option value="EVERY|{{ spider.name }}">Every</option>
+                                        </select>
+                                        {% endif %}
+                                        {% if spider.hour.mode == "every" %}
+                                        <select name="deploy_hour_mode" class="form-control input-sm">
+                                            <option value="ON|{{ spider.name }}">On</option>
+                                            <option value="EVERY|{{ spider.name }}" selected>Every</option>
+                                        </select>
+                                        {% endif %}
                                     </td>
                                     <td class="text-right">
                                         {% if spider.enabled == "yes" %}

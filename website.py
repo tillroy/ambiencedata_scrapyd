@@ -61,6 +61,8 @@ class Root(Resource):
             "bootstrap-switch.css",
             "ie10-viewport-bug-workaround.css",
             "starter-template.css",
+            "bootstrap-toggle.min.css",
+            "bootstrap-select.min.css",
             "theme.css",
             "styles.css",
             "jquery.min.js",
@@ -70,6 +72,8 @@ class Root(Resource):
             "bootstrap-filestyle.min.js",
             "bootstrap-checkbox.min.js",
             "bootstrap-switch.min.js",
+            "bootstrap-toggle.min.js",
+            "bootstrap-select.min.js",
             "modal_windows.js",
             "logo.png",
         )
@@ -115,7 +119,7 @@ class Root(Resource):
 
         msg = dir(self.runner)
 
-        return template.render(msg=msg, projects_list=list(enumerate(self.get_main_info()))).encode('utf-8')
+        return template.render(projects_list=list(enumerate(self.get_main_info()))).encode('utf-8')
 
     def render_POST(self, request):
         del_project = request.args.get("del_project")
@@ -376,23 +380,13 @@ class Project(Resource):
 
             spiders_all = version_summary.get("spiders")
             spiders_enabled = req.args.get("spider_enabled")
-            updatetd_spiders_list = list()
+            updated_spiders_list1 = list()
 
+            # update enable mode
             for spider in spiders_all:
                 if spiders_enabled is None:
                     spider.set_enabled("no")
-                    # print(
-                    #     """
-                    #     {0},
-                    #     {1},
-                    #     {2}
-                    #     """.format(
-                    #         spider.name,
-                    #         spider.enabled,
-                    #         spider.minute.value
-                    #     )
-                    # )
-                    updatetd_spiders_list.append(spider)
+                    updated_spiders_list1.append(spider)
 
                 else:
                     if spider.name in spiders_enabled:
@@ -408,7 +402,7 @@ class Project(Resource):
                         #         spider.minute.value
                         #     )
                         # )
-                        updatetd_spiders_list.append(spider)
+                        updated_spiders_list1.append(spider)
                     else:
                         spider.set_enabled("no")
                         # print("NOOOO")
@@ -423,10 +417,59 @@ class Project(Resource):
                         #         spider.minute.value
                         #     )
                         # )
-                        updatetd_spiders_list.append(spider)
+                        updated_spiders_list1.append(spider)
 
-                new_config = ProjectConfigController(self.path, self.root.config)
-                new_config.write_config(version_name, updatetd_spiders_list)
+            # update minute mode
+            updated_spiders_list2 = list()
+            spiders_deploy_minute_mode = req.args.get("deploy_minute_mode")
+            spiders_deploy_minute_mode = {i[1]: i[0] for i in [x.split("|") for x in spiders_deploy_minute_mode]}
+            # split value on |
+            for spider in updated_spiders_list1:
+                if spiders_deploy_minute_mode.get(spider.name) is not None:
+                    hour_mode = str(spiders_deploy_minute_mode.get(spider.name)).lower()
+                    spider.minute.set_mode(hour_mode)
+
+                    updated_spiders_list2.append(spider)
+
+            # update hour mode
+            updated_spiders_list3 = list()
+            spiders_deploy_hour_mode = req.args.get("deploy_hour_mode")
+            spiders_deploy_hour_mode = {i[1]: i[0] for i in [x.split("|") for x in spiders_deploy_hour_mode]}
+            # split value on |
+            for spider in updated_spiders_list2:
+                if spiders_deploy_hour_mode.get(spider.name) is not None:
+                    hour_mode = str(spiders_deploy_hour_mode.get(spider.name)).lower()
+                    spider.hour.set_mode(hour_mode)
+
+                    updated_spiders_list3.append(spider)
+
+            # update minute value
+            updated_spiders_list4 = list()
+            spiders_deploy_minute_value = req.args.get("deploy_minute_value")
+            spiders_deploy_minute_value = {i[1]: i[0] for i in [x.split("|") for x in spiders_deploy_minute_value]}
+            # split value on |
+            for spider in updated_spiders_list3:
+                if spiders_deploy_minute_value.get(spider.name) is not None:
+                    minute_value = spiders_deploy_minute_value.get(spider.name)
+                    print(minute_value)
+                    spider.minute.set_value(minute_value)
+
+                    updated_spiders_list4.append(spider)
+
+            # update hour value
+            updated_spiders_list5 = list()
+            spiders_deploy_hour_value = req.args.get("deploy_hour_value")
+            spiders_deploy_hour_value = {i[1]: i[0] for i in [x.split("|") for x in spiders_deploy_hour_value]}
+            # split value on |
+            for spider in updated_spiders_list4:
+                if spiders_deploy_hour_value.get(spider.name) is not None:
+                    hour_value = spiders_deploy_hour_value.get(spider.name)
+                    spider.hour.set_value(hour_value)
+
+                    updated_spiders_list5.append(spider)
+
+            new_config = ProjectConfigController(self.path, self.root.config)
+            new_config.write_config(version_name, updated_spiders_list5)
 
             return self.save_config.__name__
 

@@ -30,6 +30,16 @@ class Minute(object):
         else:
             raise ValueError("Value out of range (every, on)")
 
+    def set_value(self, value):
+        if self.is_minute(value):
+            self.value = str(value)
+
+    def set_mode(self, mode):
+        if mode in ("on", "every"):
+            self.mode = mode
+        else:
+            raise ValueError("Value out of range (every, on)")
+
     def get_xml(self):
         """ get lxml xml instance"""
         self.root.set("value", self.value)
@@ -68,10 +78,20 @@ class Hour(object):
         if self.is_hour(value):
             self.value = str(value)
 
-        if mode in ("every", "every"):
+        if mode in ("on", "every"):
             self.mode = mode
         else:
             raise ValueError("Value out of range (every, on)")
+
+    def set_mode(self, mode):
+        if mode in ("on", "every"):
+            self.mode = mode
+        else:
+            raise ValueError("Value out of range (every, on)")
+
+    def set_value(self, value):
+        if self.is_hour(value):
+            self.value = str(value)
 
     def get_xml(self):
         """ get lxml xml instance"""
