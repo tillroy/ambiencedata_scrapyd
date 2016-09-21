@@ -1,5 +1,5 @@
 ## Base preparations
-System based on users policy, that why to make separate user is necessity.
+System based on users policy, that's why to make separate user is necessity.
 All files and folders have to be under defined user, **including files below**.
 
 Next files should separately use:
