@@ -6,13 +6,12 @@ venv
 dist
 build
 test.xml
-run_scripts/pollution_crawler
-run_scripts/pollution_crawler2
+run_scripts/pollution_crawler.sh
+run_scripts/pollution_crawler2.sh
 old2_website.py
 old_website.py
 test.py
 scripts/configs
-scripts/crontabs
 scripts/eggs
 scripts/items
 scripts/dbs

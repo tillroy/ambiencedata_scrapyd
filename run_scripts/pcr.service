@@ -4,7 +4,7 @@ Description=PollutionCrawler
 [Service]
 Type=forking
 User=roman
-ExecStart=/home/roman/PycharmProjects/scrapyd_fork/scrapyd/scrapyd/run_scripts/runpcr
+ExecStart=/home/roman/PycharmProjects/scrapyd_fork/scrapyd/scrapyd/run_scripts/runpcr.sh
 
 [Install]
 WantedBy=default.target
