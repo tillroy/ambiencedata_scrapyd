@@ -1,6 +1,8 @@
 #!/bin/bash
 # Author: Roman Peresoliak
 # Description: initiate python environment and run pollution crawler
+# Place: use it separately from main scrapyd folder
+
 
 # path to python virt env
 ENV_HOME=/home/roman/PycharmProjects/scrapyd_fork
