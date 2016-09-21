@@ -47,9 +47,8 @@ class Root(Resource):
         # add webservices API
         services = config.items('services', ())
         for servName, servClsName in services:
-          servCls = load_object(servClsName)
-          self.putChild(servName, servCls(self))
-
+            servCls = load_object(servClsName)
+            self.putChild(servName, servCls(self))
 
         self.update_projects()
 

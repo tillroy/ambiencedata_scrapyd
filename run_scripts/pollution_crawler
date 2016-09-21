@@ -15,14 +15,14 @@
 # way to the virt env
 SCRAPYD_HOME=/home/roman/PycharmProjects/scrapyd_fork
 
+USER=roman
 
-APPNAME=scrapyd_run
+APPNAME=p_crawler
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
 #  full path to the command
-DAEMON=/home/roman/PycharmProjects/scrapyd_fork/scrapyd/scrapyd/scripts/$APPNAME.py
-
-PIDFILE=/var/run/pollution_crawler.pid
-#PIDFILE=/home/roman/PycharmProjects/scrapyd_fork/scrapyd/pollution_crawler.pid
+DAEMON=/home/roman/PycharmProjects/scrapyd_fork/scrapyd/scrapyd/scripts/scrapyd_run.py
+RUN_COMAND=python $DAEMON
+#PIDFILE=/var/run/test_scrapyd/pollution_crawler.pid
 
 #LOGFILE=/var/log/$DAEMON.log
 
@@ -30,24 +30,36 @@ PIDFILE=/var/run/pollution_crawler.pid
 . /lib/lsb/init-functions
 
 do_start() {
-  start-stop-daemon --start --quiet --pidfile $PIDFILE --background --make-pidfile --startas $DAEMON
+  #start-stop-daemon --start --pidfile $PIDFILE --user $USER --background --make-pidfile --startas $DAEMON
+#  start-stop-daemon -v --start --oknodo --make-pidfile --background --chuid $USER --pidfile $PIDFILE --startas $DAEMON
+  #start-stop-daemon -v --start --oknodo --chuid $USER  --background --pidfile $PIDFILE --make-pidfile --start --startas $DAEMON
+  start-stop-daemon --start --quiet --chuid $USER:$USER --pidfile $PIDFILE --make-pidfile --startas $DAEMON
+
+  #MSG=$(start-stop-daemon --start -v --user $USER --pidfile $PIDFILE --make-pidfile --background --startas $DAEMON --chuid $USER)
+
   RETVAL="$?"
   if [ $RETVAL == 0 ]
   then
-    # намагатись розгортати самостійно із egg
-    #scrapyd-deploy
-    log_success_msg "$APPNAME started"
+    log_success_msg "$APPNAME started"    
+    log_success_msg $MSG
   fi
 }
 
+
 do_stop() {
   #  need becouse instr below try to sho some msg
-  MSG=$(start-stop-daemon --stop --pidfile $PIDFILE)
+  #MSG=$(start-stop-daemon --user $USER --stop --pidfile $PIDFILE)
   RETVAL="$?"
+  #log_failure_msg $MSG
+
+
+
 
   if [ $RETVAL == 0 ]
   then
-    rm -f $PIDFILE
+    #rm -f $PIDFILE
+
+    start-stop-daemon --user $USER --stop --name $APPNAME
     log_success_msg "Stopped"
   else
     log_failure_msg "Not running"
@@ -58,10 +70,11 @@ case "$1" in
   start)
     cd $SCRAPYD_HOME
     source env/bin/activate
-    do_start
+    # run in a background
+    exec python $DAEMON &
   ;;
   stop)
-    do_stop
+    log_failure_msg "ss"
   ;;
   restart)
     do_stop
