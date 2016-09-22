@@ -9,10 +9,11 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th></th>
-                    <th>Spider name</th>
-                    <th>Repeat</th>
-                    <th>Use</th>
+                    <th class="text-center">Spider name</th>
+                    <th class="text-center">Start time</th>
+                    <th class="text-center">Working time</th>
+                    <th class="text-center">Logs</th>
+                    <th class="text-center">Items</th>
                 </tr>
             </thead>
             <tbody>
@@ -22,27 +23,30 @@
                     <td></td>
                     <td></td>
                 </tr>
-                <tr><th colspan="4" class="text-center info">Pending</th></tr>
+                <tr><th colspan="5" class="text-center info">Pending</th></tr>
                 <tr>
                     <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
                 </tr>
-                <tr><th colspan="4" class="text-center info">Running</th></tr>
+                <tr><th colspan="5" class="text-center info">Running</th></tr>
                 <tr>
                     <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
                 </tr>
-                <tr><th colspan="4" class="text-center info">Finished</th></tr>
+                <tr><th colspan="5" class="text-center info">Finished</th></tr>
+                {% for process in finished %}
                 <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td>{{ process.spider }}</td>
+                    <td>{{ process.start_time }}</td>
+                    <td>{{ process.end_time - process.start_time }}</td>
+                    <td><a href='/logs/{{ process.project }}/{{ process.spider }}/{{ process.job }}.log'>Logs</a></td>
+                    <td><a href='/items/{{ process.project }}/{{ process.spider }}/{{ process.job }}.jl'>Items</a></td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

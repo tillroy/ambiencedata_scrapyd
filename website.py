@@ -44,6 +44,12 @@ class Root(Resource):
 
         self.summary = self.get_main_summary()
 
+        # add additional directories
+        if logsdir:
+            self.putChild('logs', static.File(logsdir, 'text/plain'))
+        if local_items:
+            self.putChild('items', static.File(itemsdir, 'text/plain'))
+
         # add webservices API
         services = config.items('services', ())
         for servName, servClsName in services:
@@ -101,11 +107,11 @@ class Root(Resource):
 
     def getChild(self, path, request):
         """switch between pages"""
-        if path == 'home' or path == '':
+        if path == "home" or path == "":
             return self
         elif path in self.scheduler.list_projects():
             return Project(self, path)
-        elif path == 'jobs':
+        elif path == "jobs":
             return Jobs(self, path)
         else:
             return NoResource()
@@ -450,7 +456,7 @@ class Project(Resource):
             for spider in updated_spiders_list3:
                 if spiders_deploy_minute_value.get(spider.name) is not None:
                     minute_value = spiders_deploy_minute_value.get(spider.name)
-                    print(minute_value)
+                    # print(minute_value)
                     spider.minute.set_value(minute_value)
 
                     updated_spiders_list4.append(spider)
@@ -571,8 +577,6 @@ class Project(Resource):
         #     return ""
 
 
-
-
 class Jobs(Resource):
     def __init__(self, root, path):
         Resource.__init__(self)
@@ -589,8 +593,8 @@ class Jobs(Resource):
         # FIXME
         projects_list = list(enumerate(self.root_info))
 
-        res = dir(self.root.launcher)
-
+        finished = reversed(self.root.launcher.finished)
 
         template = self.root.env.get_template('jobs.html')
-        return template.render(projects_list=projects_list, msg=res).encode('utf-8')
+        return template.render(projects_list=projects_list, finished=finished).encode('utf-8')
+

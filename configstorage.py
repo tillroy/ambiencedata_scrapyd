@@ -1,6 +1,7 @@
 from lxml import etree
 from os import path, makedirs
 from crontab import CronTab
+import subprocess
 from datetime import datetime
 
 
@@ -296,7 +297,7 @@ class ProjectConfigController(object):
         http_port = self.config.get("http_port")
         # independent crontab maker, reed only config files
         config = self.read_config(version_name)
-        crontab = CronTab()
+        cron_tab = CronTab()
         for spider in config:
             if spider.enabled == "yes":
                 command = "curl http://localhost:{0}/schedule.json -d project={1} -d spider={2}".format(
@@ -305,7 +306,7 @@ class ProjectConfigController(object):
                     spider.name
                 )
                 # print(command)
-                job = crontab.new(command=command)
+                job = cron_tab.new(command=command)
                 # check mode for minute
                 if spider.minute.mode == "on":
                     job.minute.on(spider.minute.value)
@@ -317,26 +318,25 @@ class ProjectConfigController(object):
                 elif spider.hour.mode == "every":
                     job.hour.every(spider.hour.value)
 
-        crontab_path = path.join(self.project_path, version_name)
-        crontab.write(crontab_path)
+        cron_tab_path = path.join(self.project_path, version_name)
+        cron_tab.write(cron_tab_path)
 
     def use_crontab(self, version_name, user_name):
         """write crontab to system file"""
-        crontab_path = path.join(self.project_path, version_name)
-        crontab = CronTab(tabfile=crontab_path, user=user_name)
-        # cron_tab.write()
-        # write to user crontab
-        crontab.write_to_user(user=user_name)
+        exec_comand = "cd {0} && crontab {1}".format(
+            self.base_dir,
+            path.join(self.project_name, version_name)
+        )
 
-        # current crontab configuration
-        current_crontab_path = path.join(self.base_dir, "current_crontab")
-        crontab.write(current_crontab_path)
+        subprocess.Popen(exec_comand, shell=True)
 
-        current_varsion = version_name
+        # # write deployment XML file
+        # # that save information about deployed project and its version
+        current_version = version_name
         current_project = self.project_name
 
         da = Deployment(self.base_dir)
-        da.set(current_project, current_varsion, str(datetime.now()))
+        da.set(current_project, current_version, str(datetime.now()))
         da.set_xml()
         da.write()
 
