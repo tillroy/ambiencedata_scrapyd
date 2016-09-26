@@ -1,8 +1,5 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="well">
-    {{ msg }}
-</div>
 
 <div class="starter-template">
     <div class="row">
@@ -17,26 +14,28 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
                 <tr><th colspan="5" class="text-center info">Pending</th></tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
+                {% for project, line in pending %}
+                    {% for m in line.list()%}
+                    <tr>
+                        <td>{{ m['name'] }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
                 <tr><th colspan="5" class="text-center info">Running</th></tr>
+                {% for process in running %}
                 <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td>{{ process.spider }}</td>
+                    <td>{{ process.start_time }}</td>
+                    <td>{{ dt - process.start_time }}</td>
+                    <td><a href='/logs/{{ process.project }}/{{ process.spider }}/{{ process.job }}.log'>Logs</a></td>
+                    <td><a href='/items/{{ process.project }}/{{ process.spider }}/{{ process.job }}.jl'>Items</a></td>
                 </tr>
+                {% endfor %}
                 <tr><th colspan="5" class="text-center info">Finished</th></tr>
                 {% for process in finished %}
                 <tr>

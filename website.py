@@ -22,6 +22,7 @@ import shutil
 from cStringIO import StringIO
 from .project_summary import ProjectSummary
 import uuid
+from datetime import datetime
 from .configstorage import ProjectConfigController, Spider
 
 
@@ -86,6 +87,17 @@ class Root(Resource):
         for g_file in gui_files:
             self.putChild(g_file, static.File(path.join(srtatic_dir, g_file)))
 
+    def get_status(self):
+        pending = sum(q.count() for q in self.poller.queues.values())
+        running = len(self.launcher.processes)
+        finished = len(self.launcher.finished)
+        res = {
+            'pending': pending,
+            'running': running,
+            'finished': finished
+        }
+        return res
+
     def get_main_info(self):
         """make statistics of projects, versions and spiders"""
         projects = self.scheduler.list_projects()
@@ -124,7 +136,10 @@ class Root(Resource):
 
         msg = dir(self.runner)
 
-        return template.render(projects_list=list(enumerate(self.get_main_info()))).encode('utf-8')
+        return template.render(
+            projects_list=list(enumerate(self.get_main_info())),
+            status=self.get_status()
+        ).encode('utf-8')
 
     def render_POST(self, request):
         del_project = request.args.get("del_project")
@@ -368,13 +383,14 @@ class Project(Resource):
         # FIXME to summary dict
         projects_list = list(enumerate(self.root_info))
         page = self.project_summary
+        status = self.root.get_status()
 
         template = self.root.env.get_template('project.html')
         return template.render(
             project_name=page.get("project_name"),
             projects_list=projects_list,
             versions_list=page.get("project_summary"),
-            msg=str(self.get_status())
+            status=status
         ).encode('utf-8')
 
     def save_config(self, req):
@@ -591,10 +607,20 @@ class Jobs(Resource):
     #             getattr(p, a)
     def render_GET(self, request):
         # FIXME
+        status = self.root.get_status()
         projects_list = list(enumerate(self.root_info))
 
+        pending = self.root.poller.queues.items()
+        running = self.root.launcher.processes.values()
         finished = reversed(self.root.launcher.finished)
 
         template = self.root.env.get_template('jobs.html')
-        return template.render(projects_list=projects_list, finished=finished).encode('utf-8')
+        return template.render(
+            projects_list=projects_list,
+            finished=finished,
+            pending=pending,
+            running=running,
+            dt=datetime.now(),
+            status=status
+        ).encode('utf-8')
 

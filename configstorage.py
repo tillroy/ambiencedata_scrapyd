@@ -323,6 +323,7 @@ class ProjectConfigController(object):
 
     def use_crontab(self, version_name, user_name):
         """write crontab to system file"""
+        # TODO make for Windows OS something similar
         exec_comand = "cd {0} && crontab {1}".format(
             self.base_dir,
             path.join(self.project_name, version_name)

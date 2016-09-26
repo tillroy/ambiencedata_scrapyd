@@ -61,26 +61,24 @@
                             </ul>
                         </li>
                         <li><a href="/jobs">Jobs</a></li>
-                        <li><a href="#contact">Logs</a></li>
                         <li><a href="https://scrapyd.readthedocs.io/en/stable/index.html" target="_blank">Doc</a></li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="#">Action</a></li>
-                                <li><a href="#">Another action</a></li>
-                                <li><a href="#">Something else here</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li class="dropdown-header">Nav header</li>
-                                <li><a href="#">Separated link</a></li>
-                                <li><a href="#">One more separated link</a></li>
-                            </ul>
-                        </li>
                     </ul>
+                    <div id="spiders_status">
+                        {% if status %}
+                        <ul>
+                            <li><span id="sps_running">{{ status.running }}</span> running</li>
+                            <li><span id="sps_pending">{{ status.pending }}</span> pending</li>
+                            <li><span id="sps_finished">{{ status.finished }}</span> finished</li>
+                        </ul>
+                        {% endif %}
+                    </div>
                 </div><!--/.nav-collapse -->
             </div>
         </nav>
 
+
         <div class="container">
+
             {% block content %}
             {% endblock %}
         </div>

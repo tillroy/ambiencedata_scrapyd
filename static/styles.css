@@ -5,3 +5,35 @@
 #alert_is_success {
     display: none;
 }
+
+#spiders_status {
+    padding: 0;
+    margin: 0;
+    float: right;
+}
+
+#spiders_status ul {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+#spiders_status li {
+    font-size: 8pt;
+    color: white;
+}
+
+#spiders_status span {
+    font-weight: bold;
+}
+
+#sps_running {
+    color: #70f48f;
+}
+#sps_pending {
+    color: #f49711;
+
+}
+#sps_finished {
+    color: #11b7f4;
+}
